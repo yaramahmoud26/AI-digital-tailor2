@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Digital Tailor - الخياط الرقمي 3D</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script async src="https://docs.opencv.org/4.5.4/opencv.js" type="text/javascript" onload="onOpenCvReady()"></script>
+  <style>
+    /* الألوان والتأثيرات العصرية */
+    :root {
+      --bg-color: #f4f7f6;
+      --card-bg: rgba(255, 255, 255, 0.75);
+      --text-main: #1A1A1A;
+      --text-muted: #555555;
+      --gold: #C5A059;
+      --gold-hover: #b08d4a;
+      --border-color: rgba(255, 255, 255, 0.5);
+      --success: #27ae60;
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Tajawal', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* خلفية متدرجة متحركة */
+    body {
+      background: linear-gradient(-45deg, #0ff2c1, #0edf73, #1f5ac8, #7a20d9);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* الشريط العلوي */
+    header {
+      background: rgba(26, 26, 26, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--gold);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--glass-shadow);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid rgba(197, 159, 89, 0.223);
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    /* الكروت والألواح (تأثير الزجاج) */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: var(--glass-shadow);
+      margin-bottom: 30px;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover { transform: translateY(-2px); }
+
+    /* الأزرار الاحترافية */
+    .btn {
+      background: linear-gradient(135deg, var(--gold) 0%, #e8c37d 100%);
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.05rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 700;
+      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(197, 160, 89, 0.4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--gold);
+      color: var(--gold);
+      box-shadow: none;
+    }
+
+    .btn-outline:hover {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* حقول الإدخال */
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      background-color: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--gold);
+      background-color: #fff;
+      box-shadow: 0 0 0 4px rgba(197, 160, 89, 0.1);
+    }
+
+    /* تخطيط الشاشة الرئيسية */
+    .dashboard-layout { display: flex; gap: 30px; flex-wrap: wrap; }
+    .camera-section { flex: 2; min-width: 300px; position: relative; }
+    .sidebar-section { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* الكاميرا */
+    #video-wrapper {
+      position: relative;
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 4px solid #fff;
+      background: #000;
+      box-shadow: var(--glass-shadow);
+    }
+
+    video,
+    canvas#output_canvas { width: 100%; display: block; transform: scaleX(-1); }
+    canvas#output_canvas { position: absolute; top: 0; left: 0; z-index: 2; }
+
+    .live-instruction {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26, 26, 26, 0.85);
+      color: #fff;
+      padding: 12px 25px;
+      border-radius: 30px;
+      z-index: 3;
+      font-weight: 700;
+      text-align: center;
+      width: 85%;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* شريط التقدم */
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    .step {
+      flex: 1;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 10px 0;
+      border-bottom: 3px solid transparent;
+      transition: 0.3s;
+    }
+
+    .step.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .step.completed { color: var(--success); border-bottom-color: var(--success); }
+
+    /* المقاسات الحية */
+    .metric-list { display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+    .metric-item { display: flex; justify-content: space-between; padding: 12px 15px; border-radius: 8px; background: rgba(255, 255, 255, 0.6); font-size: 1rem; transition: 0.2s; }
+    .metric-item:hover { background: rgba(255, 255, 255, 0.9); transform: scale(1.02); }
+    .metric-item span:last-child { font-weight: 800; color: var(--gold); }
+
+    /* النوافذ المنبثقة */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5); z-index: 100; display: none;
+      justify-content: center; align-items: center; backdrop-filter: blur(6px);
+    }
+    .modal-content { background: #fff; padding: 40px; border-radius: 20px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); }
+    .modal-content h3 { color: var(--gold); margin-bottom: 15px; font-size: 1.6rem; font-weight: 800; }
+    .modal-content p { margin-bottom: 30px; color: var(--text-muted); font-size: 1.1rem; }
+
+    /* جدول المراجعة */
+    .review-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border-radius: 10px; overflow: hidden; }
+    .review-table th, .review-table td { padding: 12px 15px; border: 1px solid #eee; text-align: right; }
+    .review-table th { background-color: rgba(197, 160, 89, 0.1); color: var(--text-main); font-weight: 700; }
+
+    /* قسم الباترونات النهائي */
+    .pattern-selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .pattern-card { border: 2px solid transparent; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255, 255, 255, 0.8); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03); }
+    .pattern-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); }
+    .pattern-card.selected { border-color: var(--gold); background-color: #fff; box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2); }
+    .pattern-card img { width: 100%; height: 90px; object-fit: contain; margin-bottom: 10px; }
+    .pattern-card p { font-size: 0.9rem; font-weight: 700; margin: 0; color: var(--text-main); }
+
+    #final-pattern-canvas { width: 100%; max-height: 600px; background: #fff; border: 2px solid var(--border-color); border-radius: 16px; cursor: grab; box-shadow: var(--glass-shadow); }
+
+    .export-bar { display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+    .hidden { display: none !important; }
+
+    /* واجهة الشات */
+    .chat-container {
+      background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color); border-radius: 16px; display: flex; flex-direction: column;
+      height: 500px; margin-top: 40px; margin-bottom: 20px; box-shadow: var(--glass-shadow); overflow: hidden;
+    }
+    .chat-header {
+      background: rgba(26, 26, 26, 0.9); color: var(--gold); padding: 18px 20px; font-weight: 800; font-size: 1.1rem;
+      display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: rgba(255, 255, 255, 0.3); }
+    .message { padding: 14px 18px; border-radius: 12px; max-width: 85%; font-size: 1rem; line-height: 1.6; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+    .message.user { background: #ffffff; color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid rgba(0, 0, 0, 0.05); }
+    .message.ai { background: linear-gradient(135deg, rgba(197, 160, 89, 0.15) 0%, rgba(197, 160, 89, 0.05) 100%); color: var(--text-main); border: 1px solid rgba(197, 160, 89, 0.3); align-self: flex-end; text-align: right; border-bottom-right-radius: 0; }
+    .chat-input-area { display: flex; padding: 15px; border-top: 1px solid rgba(0, 0, 0, 0.05); background: rgba(255, 255, 255, 0.8); gap: 12px; }
+    .chat-input-area input { flex: 1; margin-bottom: 0; border-radius: 10px; background: #fff; border: 1px solid #ddd; }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>AI Digital Tailor</h1>
+    <div style="font-size: 0.95rem; font-weight: 500;">أداة القياس الذكية</div>
+  </header>
+
+  <div class="container">
+
+    <div id="setup-view" class="card" style="max-width: 600px; margin: 0 auto;">
+      <h2 style="text-align: center; margin-bottom: 15px; color: var(--gold); font-weight: 800;">إعداد المعايرة</h2>
+      <p style="text-align: center; margin-bottom: 25px; color: var(--text-muted);">برجاء اختيار طريقة معايرة المسافات لبدء المشروع واستخراج القياسات بدقة</p>
+
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        <button class="btn btn-outline" style="flex:1;" id="btn-mode1" onclick="selectSetupMode('card')" disabled>1. بطاقة الهوية (OpenCV)</button>
+        <button class="btn btn-outline" style="flex:1;" id="btn-mode2" onclick="selectSetupMode('height')">2. الطول الثابت</button>
+      </div>
+
+      <div id="setup-card-inputs" class="hidden">
+        <input type="text" id="setup-name-card" placeholder="اسم العميل (اختياري)">
+        <button class="btn" style="width: 100%;" onclick="startScanner('card')">بدء الماسح الذكي</button>
+      </div>
+
+      <div id="setup-height-inputs" class="hidden">
+        <input type="text" id="setup-name-height" placeholder="اسم العميل (اختياري)">
+        <input type="number" id="setup-height-val" placeholder="أدخل طولك الحقيقي (سم)">
+        <button class="btn" style="width: 100%;" onclick="startScanner('height')">بدء الماسح الذكي</button>
+      </div>
+    </div>
+
+    <div id="scanner-view" class="dashboard-layout hidden">
+      <div class="camera-section card">
+        <div class="progress-steps">
+          <div id="step-1" class="step active">Front ⏳</div>
+          <div id="step-2" class="step">Side ○</div>
+          <div id="step-3" class="step">Back ○</div>
+        </div>
+
+        <div id="video-wrapper">
+          <video id="webcam" autoplay playsinline></video>
+          <canvas id="output_canvas"></canvas>
+          <div id="live-instruction" class="live-instruction">يرجى الوقوف في منتصف الكاميرا...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section card">
+        <h3 style="color: var(--gold); font-weight: 800; margin-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.05); padding-bottom: 15px;">القياسات الحية المستخرجة</h3>
+        <div class="metric-list" id="live-metrics-list"></div>
+      </div>
+    </div>
+
+    <div id="pattern-view" class="card hidden">
+      <h2 style="text-align: center; color: var(--gold); font-weight: 800; margin-bottom: 25px;">تطبيق القياسات على الباترون</h2>
+
+      <h4 style="margin-bottom: 15px; font-weight: 700;">اختر القالب الهندسي:</h4>
+      <div class="pattern-selection-grid">
+        <div class="pattern-card selected" onclick="selectPatternTemplate(1, 'blueprint-shirt.jpg', this)">
+          <img src="blueprint-shirt.jpg" alt="Shirt Blueprint" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PC9zdmc+'">
+          <p>باترون قميص أساسي</p>
+        </div>
+        <div class="pattern-card" onclick="selectPatternTemplate(2, 'blueprint-pants.jpg', this)">
+          <img src="blueprint-pants.jpg" alt="Pants Blueprint" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PC9zdmc+'">
+          <p>باترون بنطلون</p>
+        </div>
+      </div>
+
+      <div style="text-align: center;">
+        <canvas id="final-pattern-canvas" width="800" height="600"></canvas>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-header">
+          <span>✨ مساعد المبيعات وتصميم الباترون</span>
+          <span style="font-size: 0.85rem; color: #a8e6cf; font-weight: normal;">متصل الآن 🟢</span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="message ai">مرحباً! أنا خياطك الرقمي الذكي. لقد استلمت مقاساتك بنجاح. اطلب مني تصميم باترون بناءً على المقاسات وسأقوم برسمه لك فوراً.</div>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" id="chat-input" placeholder="اكتب طلبك هنا (مثال: ارسم لي باترون القميص الأساسي)..." onkeypress="if(event.key === 'Enter') sendMessageToChatGPT()">
+          <button class="btn" onclick="sendMessageToChatGPT()">إرسال</button>
+        </div>
+      </div>
+
+      <div class="export-bar">
+        <button class="btn" onclick="downloadPDF()">⬇ تحميل PDF</button>
+        <button class="btn btn-outline" onclick="downloadPNG()">⬇ تحميل PNG</button>
+        <button class="btn btn-outline" onclick="alert('جاري إعداد محرك DXF في التحديث القادم')">⬇ تحميل DXF</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="stage-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 id="stage-modal-title">تم بنجاح</h3>
+      <p id="stage-modal-desc">تم الانتهاء من قياسات الواجهة الحالية بنجاح.</p>
+      <button class="btn" style="width: 100%;" onclick="continueNextStage()">متابعة للمرحلة التالية</button>
+    </div>
+  </div>
+
+  <div id="review-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px;">
+      <h3>مراجعة القياسات النهائية</h3>
+      <table class="review-table" id="review-table-body">
+        <tr><th>القياس</th><th>القيمة (سم)</th></tr>
+      </table>
+      <div style="display: flex; gap: 15px; justify-content: center;">
+        <button class="btn" style="flex: 1;" onclick="confirmMeasurements()">تأكيد وإنشاء الباترون</button>
+        <button class="btn btn-outline" style="flex: 1;" onclick="location.reload()">إعادة القياس</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentScanStage = 1;
+    let pauseScan = false;
+    const SAMPLES_PER_STAGE = 30;
+    let stageSamples = [];
+
+    let widthsFront = {}, depthsSide = {}, widthsBack = {};
+    let finalMetrics = Array.from({ length: 14 }, () => 0);
+
+    let selectedMode = "";
+    let userRealHeightCm = 0;
+    let finalUserName = "عميل مجهول";
+
+    const videoElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const instructionDiv = document.getElementById('live-instruction');
+
+    let lastSampleTime = 0;
+    const SAMPLE_DELAY_MS = 100;
+    let cameraStarted = false;
+
+    let activePatternId = 1;
+    let selectedPatternImgName = "blueprint-shirt.jpg";
+    let patternImageElement = new Image();
+
+    const metricsLabels = [
+      "", "الطول الكلي", "محيط الرقبة", "محيط الصدر", "محيط أسفل الصدر",
+      "محيط الخصر", "محيط الورك", "محيط الفخذ", "محيط الركبة", "محيط الكاحل",
+      "عرض الكتفين", "محيط الظهر", "طول الذراع", "خصر الخلف"
+    ];
+
+    function initLiveMetricsUI() {
+      const list = document.getElementById('live-metrics-list');
+      list.innerHTML = '';
+      for (let i = 1; i <= 13; i++) {
+        list.innerHTML += `<div class="metric-item"><span>${i}. ${metricsLabels[i]}</span> <span id="val-${i}">--</span></div>`;
+      }
+    }
+
+    function onOpenCvReady() {
+      document.getElementById("btn-mode1").removeAttribute("disabled");
+      document.getElementById("btn-mode1").innerText += " (متاح)";
+    }
+
+    function selectSetupMode(mode) {
+      selectedMode = mode;
+      document.getElementById('setup-card-inputs').classList.toggle('hidden', mode !== 'card');
+      document.getElementById('setup-height-inputs').classList.toggle('hidden', mode !== 'height');
+    }
+
+    function startScanner(mode) {
+      if (mode === 'height') {
+        const h = document.getElementById('setup-height-val').value;
+        if (!h || h < 100 || h > 250) return alert("برجاء إدخال طول صحيح.");
+        userRealHeightCm = parseFloat(h);
+        finalUserName = document.getElementById('setup-name-height').value || "عميل مجهول";
+      } else {
+        finalUserName = document.getElementById('setup-name-card').value || "عميل مجهول";
+      }
+
+      document.getElementById('setup-view').classList.add('hidden');
+      document.getElementById('scanner-view').classList.remove('hidden');
+      initLiveMetricsUI();
+
+      if (!cameraStarted) {
+        camera.start();
+        cameraStarted = true;
+        videoElement.addEventListener('loadeddata', () => {
+          canvasElement.width = videoElement.videoWidth;
+          canvasElement.height = videoElement.videoHeight;
+        });
+      }
+    }
+
+    function calculateDistance(p1, p2) { return Math.sqrt(Math.pow((p1.x - p2.x) * 640, 2) + Math.pow((p1.y - p2.y) * 480, 2)); }
+
+    function drawCorrectedTrackingLines(ctx, ls, rs, lh, rh, lk, la) {
+      ctx.strokeStyle = "#C5A059"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(ls.x * canvasElement.width, ls.y * canvasElement.height); ctx.lineTo(rs.x * canvasElement.width, rs.y * canvasElement.height); ctx.stroke();
+      let cy = (ls.y + lh.y) / 2 * canvasElement.height * 0.9;
+      ctx.beginPath(); ctx.moveTo(ls.x * canvasElement.width - 20, cy); ctx.lineTo(rs.x * canvasElement.width + 20, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(lh.x * canvasElement.width, lh.y * canvasElement.height); ctx.lineTo(rh.x * canvasElement.width, rh.y * canvasElement.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(lh.x * canvasElement.width, lh.y * canvasElement.height); ctx.lineTo(lk.x * canvasElement.width, lk.y * canvasElement.height); ctx.lineTo(la.x * canvasElement.width, la.y * canvasElement.height); ctx.stroke();
+    }
+
+    function calculateEllipseCirc(a, b) {
+      let r1 = a / 2, r2 = b / 2;
+      return Math.PI * (3 * (r1 + r2) - Math.sqrt((3 * r1 + r2) * (r1 + 3 * r2)));
+    }
+
+    function playAudioFeedback(type) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(type === 'stage' ? 800 : 1200, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+      } catch (e) { }
+    }
+
+    function onResults(results) {
+      if (pauseScan) return;
+
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+      if (!results.poseLandmarks) {
+        instructionDiv.innerText = "برجاء الوقوف في منتصف الكاميرا تماماً...";
+        instructionDiv.style.backgroundColor = "rgba(220, 53, 69, 0.85)";
+        return;
+      }
+
+      const landmarks = results.poseLandmarks;
+      const nose = landmarks[0]; const leftShoulder = landmarks[11]; const rightShoulder = landmarks[12];
+      const leftHip = landmarks[23]; const rightHip = landmarks[24]; const leftKnee = landmarks[25];
+      const leftAnkle = landmarks[27]; const rightAnkle = landmarks[28]; const leftElbow = landmarks[13]; const leftWrist = landmarks[15];
+
+      if (nose.visibility < 0.55 || leftAnkle.visibility < 0.55) {
+        instructionDiv.innerText = "تأكد أن الجسم بالكامل (الرأس والقدمين) داخل الإطار";
+        instructionDiv.style.backgroundColor = "rgba(245, 158, 11, 0.85)";
+        return;
+      }
+
+      instructionDiv.style.backgroundColor = "rgba(39, 174, 96, 0.9)";
+
+      let dynamicPixelToCmRatio = 0.264;
+      if (selectedMode === 'height') {
+        let ankleY = (leftAnkle.y + rightAnkle.y) / 2;
+        dynamicPixelToCmRatio = userRealHeightCm / (calculateDistance(nose, { x: (leftAnkle.x + rightAnkle.x) / 2, y: ankleY }) * 1.07);
+      }
+
+      drawCorrectedTrackingLines(canvasCtx, leftShoulder, rightShoulder, leftHip, rightHip, leftKnee, leftAnkle);
+
+      let currentWidth = calculateDistance(rightShoulder, leftShoulder) * dynamicPixelToCmRatio;
+      let currentHipWidth = calculateDistance(rightHip, leftHip) * dynamicPixelToCmRatio;
+      let currentHeight = (calculateDistance(nose, { x: (leftAnkle.x + rightAnkle.x) / 2, y: (leftAnkle.y + rightAnkle.y) / 2 }) * 1.07) * dynamicPixelToCmRatio;
+      let currentArmLength = (calculateDistance(leftShoulder, leftElbow) + calculateDistance(leftElbow, leftWrist)) * dynamicPixelToCmRatio;
+
+      const currentTime = Date.now();
+      if (currentTime - lastSampleTime >= SAMPLE_DELAY_MS) {
+        lastSampleTime = currentTime;
+
+        if (currentScanStage === 1) {
+          instructionDiv.innerText = `قف بشكل مستقيم للأمام. جاري القياس: ${Math.round((stageSamples.length / SAMPLES_PER_STAGE) * 100)}%`;
+        } else if (currentScanStage === 2) {
+          instructionDiv.innerText = `استدر للجنب تماماً. جاري القياس: ${Math.round((stageSamples.length / SAMPLES_PER_STAGE) * 100)}%`;
+        } else if (currentScanStage === 3) {
+          instructionDiv.innerText = `اعطِ ظهرك للكاميرا. جاري القياس: ${Math.round((stageSamples.length / SAMPLES_PER_STAGE) * 100)}%`;
+        }
+
+        stageSamples.push({ w: currentWidth, h: currentHipWidth, hgt: currentHeight, arm: currentArmLength });
+
+        if (stageSamples.length >= SAMPLES_PER_STAGE) {
+          let avgW = stageSamples.reduce((sum, s) => sum + s.w, 0) / SAMPLES_PER_STAGE;
+          let avgH = stageSamples.reduce((sum, s) => sum + s.h, 0) / SAMPLES_PER_STAGE;
+          let avgHgt = stageSamples.reduce((sum, s) => sum + s.hgt, 0) / SAMPLES_PER_STAGE;
+          let avgArm = stageSamples.reduce((sum, s) => sum + s.arm, 0) / SAMPLES_PER_STAGE;
+
+          pauseScan = true;
+          playAudioFeedback('stage');
+
+          if (currentScanStage === 1) {
+            widthsFront = { shoulder: avgW, hip: avgH, height: avgHgt, arm: avgArm };
+            showStageModal("الواجهة الأمامية مكتملة ✅", "يرجى الوقوف من الجانب أمام الكاميرا للحصول على القياسات الجانبية. اضغط متابعة عند الاستعداد.");
+          } else if (currentScanStage === 2) {
+            depthsSide = { shoulder: avgW, hip: avgH };
+            showStageModal("القياسات الجانبية مكتملة ✅", "يرجى الوقوف بحيث يكون الظهر مواجهاً للكاميرا. اضغط متابعة عند الاستعداد.");
+          } else if (currentScanStage === 3) {
+            widthsBack = { shoulder: avgW, hip: avgH };
+            calculateFinalResults();
+            playAudioFeedback('final');
+            showReviewModal();
+          }
+        }
+      }
+    }
+
+    function showStageModal(title, desc) {
+      document.getElementById('stage-modal-title').innerText = title;
+      document.getElementById('stage-modal-desc').innerText = desc;
+      document.getElementById('stage-modal').style.display = 'flex';
+      updateProgressUI();
+    }
+
+    function continueNextStage() {
+      document.getElementById('stage-modal').style.display = 'none';
+      stageSamples = [];
+      currentScanStage++;
+      updateProgressUI();
+      pauseScan = false;
+    }
+
+    function updateProgressUI() {
+      document.getElementById('step-1').className = currentScanStage > 1 ? 'step completed' : (currentScanStage === 1 ? 'step active' : 'step');
+      document.getElementById('step-1').innerText = currentScanStage > 1 ? 'Front ✔' : 'Front ⏳';
+
+      document.getElementById('step-2').className = currentScanStage > 2 ? 'step completed' : (currentScanStage === 2 ? 'step active' : 'step');
+      document.getElementById('step-2').innerText = currentScanStage > 2 ? 'Side ✔' : (currentScanStage === 2 ? 'Side ⏳' : 'Side ○');
+
+      document.getElementById('step-3').className = currentScanStage > 3 ? 'step completed' : (currentScanStage === 3 ? 'step active' : 'step');
+      document.getElementById('step-3').innerText = currentScanStage > 3 ? 'Back ✔' : (currentScanStage === 3 ? 'Back ⏳' : 'Back ○');
+    }
+
+    function calculateFinalResults() {
+      finalMetrics[1] = widthsFront.height.toFixed(1);
+      finalMetrics[10] = ((widthsFront.shoulder + widthsBack.shoulder) / 2).toFixed(1);
+      finalMetrics[12] = widthsFront.arm.toFixed(1);
+
+      finalMetrics[2] = (finalMetrics[10] * 0.38 * Math.PI).toFixed(1);
+      finalMetrics[3] = calculateEllipseCirc(widthsFront.shoulder * 1.05, depthsSide.shoulder * 1.1).toFixed(1);
+      finalMetrics[4] = (finalMetrics[3] * 0.89).toFixed(1);
+      finalMetrics[5] = calculateEllipseCirc((widthsFront.shoulder + widthsFront.hip) / 2 * 0.85, depthsSide.hip * 0.9).toFixed(1);
+      finalMetrics[6] = calculateEllipseCirc(widthsFront.hip * 1.15, depthsSide.hip * 1.25).toFixed(1);
+
+      finalMetrics[7] = (widthsFront.hip * 0.55 * Math.PI).toFixed(1);
+      finalMetrics[8] = (widthsFront.hip * 0.38 * Math.PI).toFixed(1);
+      finalMetrics[9] = (widthsFront.hip * 0.26 * Math.PI).toFixed(1);
+      finalMetrics[11] = (finalMetrics[10] * 1.04).toFixed(1);
+      finalMetrics[13] = (finalMetrics[5] * 0.48).toFixed(1);
+
+      for (let i = 1; i <= 13; i++) {
+        const el = document.getElementById(`val-${i}`);
+        if (el) el.innerText = finalMetrics[i] + " cm";
+      }
+    }
+
+    function showReviewModal() {
+      const tbody = document.getElementById('review-table-body');
+      tbody.innerHTML = '<tr><th>القياس</th><th>القيمة (سم)</th></tr>';
+
+      const keyIndices = [1, 3, 5, 6, 10, 2, 12];
+      keyIndices.forEach(i => {
+        tbody.innerHTML += `<tr><td>${metricsLabels[i]}</td><td><strong style="color: var(--gold);">${finalMetrics[i]}</strong></td></tr>`;
+      });
+
+      document.getElementById('review-modal').style.display = 'flex';
+    }
+
+    function confirmMeasurements() {
+      document.getElementById('review-modal').style.display = 'none';
+      document.getElementById('scanner-view').classList.add('hidden');
+      document.getElementById('pattern-view').classList.remove('hidden');
+
+      if (cameraStarted) { camera.stop(); cameraStarted = false; }
+
+      // تأكد أن الصورة blueprint-shirt.jpg موجودة لتجنب رسائل الخطأ
+      selectPatternTemplate(1, 'blueprint-shirt.jpg', document.querySelector('.pattern-card'));
+    }
+
+    function selectPatternTemplate(id, fileName, element) {
+      activePatternId = id;
+      selectedPatternImgName = fileName;
+
+      document.querySelectorAll('.pattern-card').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+
+      patternImageElement.onload = function () {
+        draw2DPatternCanvas();
+      };
+      patternImageElement.src = fileName;
+    }
+
+    function draw2DPatternCanvas() {
+      const canvas = document.getElementById('final-pattern-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const targetWidth = canvas.parentElement.clientWidth;
+      canvas.width = targetWidth;
+      
+      // إذا لم يتم تحميل الصورة بشكل صحيح يتم تجنب القسمة على صفر
+      if(patternImageElement.width > 0) {
+        canvas.height = (patternImageElement.height / patternImageElement.width) * targetWidth;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(patternImageElement, 0, 0, canvas.width, canvas.height);
+      } else {
+        canvas.height = 600; // قيمة افتراضية في حالة عدم وجود صورة
+      }
+
+      // مقاييس خاصة بالباترون الهندسي العريض
+      const scaleX = canvas.width / 1000; 
+      const scaleY = canvas.height / 600;
+
+      ctx.strokeStyle = "rgba(197, 160, 89, 0.9)";
+      ctx.lineWidth = 3;
+
+      if (activePatternId === 1) {
+        // إحداثيات مبدئية لباترون القميص الهندسي - قم بتعديلها لتطابق صورتك تماماً
+        drawMetricArrow(ctx, 150 * scaleX, 100 * scaleY, 350 * scaleX, 100 * scaleY, finalMetrics[10], "الكتف");
+        drawMetricArrow(ctx, 120 * scaleX, 300 * scaleY, 380 * scaleX, 300 * scaleY, (finalMetrics[3] / 2).toFixed(1), "الصدر");
+        drawMetricArrow(ctx, 600 * scaleX, 150 * scaleY, 600 * scaleX, 450 * scaleY, finalMetrics[12], "طول الكم");
+        drawMetricArrow(ctx, 220 * scaleX, 50 * scaleY, 280 * scaleX, 50 * scaleY, (finalMetrics[2] / 2).toFixed(1), "الرقبة");
+      } else {
+        drawMetricArrow(ctx, canvas.width * 0.2, canvas.height * 0.2, canvas.width * 0.8, canvas.height * 0.2, finalMetrics[10], "الكتف");
+      }
+    }
+
+    function drawMetricArrow(ctx, x1, y1, x2, y2, value, label = "") {
+      const headlen = 8; const angle = Math.atan2(y2 - y1, x2 - x1);
+
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      ctx.moveTo(x1, y1); ctx.lineTo(x1 + headlen * Math.cos(angle + Math.PI / 6), y1 + headlen * Math.sin(angle + Math.PI / 6));
+      ctx.moveTo(x1, y1); ctx.lineTo(x1 + headlen * Math.cos(angle - Math.PI / 6), y1 + headlen * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(x2, y2); ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.moveTo(x2, y2); ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.stroke();
+
+      const mx = (x1 + x2) / 2; const my = (y1 + y2) / 2;
+      ctx.save(); ctx.translate(mx, my);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(-45, -14, 90, 28);
+      ctx.strokeStyle = "#C5A059"; ctx.strokeRect(-45, -14, 90, 28);
+      ctx.fillStyle = "#1A1A1A"; ctx.font = "bold 13px 'Tajawal', sans-serif";
+      ctx.fillText(`${label}: ${value}cm`, 0, 0);
+      ctx.restore();
+    }
+
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFillColor(26, 26, 26);
+      doc.rect(0, 0, 210, 40, 'F');
+      doc.setFont("Helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(197, 160, 89);
+      doc.text("AI DIGITAL TAILOR", 20, 20);
+      doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+      doc.text("PRECISE 3D BIOMETRIC SIZE REPORT", 20, 30);
+
+      doc.setTextColor(50, 50, 50);
+      doc.text(`Client Name: ${finalUserName}`, 20, 60);
+      doc.text(`Calibration Mode: ${selectedMode}`, 20, 68);
+      doc.text(`Pattern Template: ${selectedPatternImgName}`, 20, 76);
+
+      doc.setFillColor(250, 250, 250); doc.rect(20, 90, 170, 160, 'F');
+      doc.setDrawColor(220, 220, 220); doc.rect(20, 90, 170, 160, 'D');
+      doc.setFont("Helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(26, 26, 26);
+
+      const pdfLabels = [
+        "", "1. Total Height", "2. Neck Circumference", "3. Chest Circumference",
+        "4. Underbust Circumference", "5. Waist Circumference", "6. Hips Circumference",
+        "7. Thigh Circumference", "8. Knee Circumference", "9. Ankle Circumference",
+        "10. Shoulders Width", "11. Upper Back Circumference", "12. Sleeve Length",
+        "13. Back Waist Circumference"
+      ];
+
+      let yOffset = 105;
+      for (let i = 1; i <= 13; i++) {
+        doc.text(pdfLabels[i], 28, yOffset);
+        doc.text(`${finalMetrics[i]} cm`, 160, yOffset);
+        if (i < 13) {
+          doc.setLineWidth(0.1); doc.line(25, yOffset + 4, 185, yOffset + 4);
+        }
+        yOffset += 11.5;
+      }
+
+      doc.setFontSize(10); doc.setTextColor(197, 160, 89);
+      doc.text("Powered by AI Digital Tailor", 20, 282);
+      doc.save(`Tailor_Report_${finalUserName}.pdf`);
+    }
+
+    function downloadPNG() {
+      const canvas = document.getElementById('final-pattern-canvas');
+      const link = document.createElement('a');
+      link.download = `Pattern_${finalUserName}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.55, minTrackingConfidence: 0.55 });
+    pose.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => { await pose.send({ image: videoElement }); },
+      width: 640, height: 480
+    });
+
+    // ----------------------------------------------------
+    // دوال المساعد الذكي Groq Cloud
+    // ----------------------------------------------------
+
+    function getMeasurementsContext() {
+      let context = "معلومات العميل الحالية:\n";
+      context += `- الاسم: ${finalUserName}\n`;
+      context += `- الباترون المختار: ${selectedPatternImgName}\n\nالمقاسات المستخرجة (بالسنتيمتر):\n`;
+
+      const keyIndices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+      keyIndices.forEach(i => {
+        context += `- ${metricsLabels[i]}: ${finalMetrics[i]} سم\n`;
+      });
+
+      return context;
+    }
+
+function appendMessage(content, sender, isSvg = false) {
+  const chatBox = document.getElementById('chat-messages');
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `message ${sender}`;
+
+  if (isSvg) {
+    // إضافة رسالة توضيحية فوق الباترون
+    const textElement = document.createElement('div');
+    textElement.innerText = "تفضل، هذا هو الباترون مسقط عليه مقاساتك:";
+    textElement.style.marginBottom = '10px';
+    textElement.style.fontWeight = '700';
+
+    // إنشاء حاوية لعرض الباترون المباشر
+    const svgContainer = document.createElement('div');
+    svgContainer.innerHTML = content; // حقن الكود مباشرة
+    svgContainer.style.width = '100%';
+    svgContainer.style.background = '#fdfbfb';
+    svgContainer.style.borderRadius = '10px';
+    svgContainer.style.marginTop = '10px';
+    svgContainer.style.border = '1px solid rgba(197, 160, 89, 0.3)';
+    svgContainer.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
+    svgContainer.style.overflow = 'hidden';
+    svgContainer.style.textAlign = 'center';
+    svgContainer.style.padding = '10px';
+
+    // ضبط أبعاد الـ SVG ليتناسب مع الشاشة
+    const svgEl = svgContainer.querySelector('svg');
+    if(svgEl) {
+      svgEl.style.maxWidth = '100%';
+      svgEl.style.height = 'auto';
+    }
+
+    msgDiv.appendChild(textElement);
+    msgDiv.appendChild(svgContainer);
+  } else {
+    msgDiv.innerHTML = content;
+  }
+
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+    async function sendMessageToChatGPT() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      appendMessage(text, 'user');
+      input.value = '';
+
+      const userMessageCount = document.querySelectorAll('.message.user').length;
+      let fullPrompt = text;
+
+      if (userMessageCount === 1) {
+        fullPrompt = `أنت خياط رقمي خبير. بناءً على هذه المقاسات: \n${getMeasurementsContext()}\n\nطلب العميل: ${text}\nقم بتوليد كود SVG لباترون مبسط يحتوي على أبعاد العميل على الرسمة. إذا كنت ستقوم بتوليد رسمة، أرسل كود الـ SVG فقط بدون أي نصوص إضافية حوله لكي أتمكن من عرضه مباشرة.`;
+      }
+
+      appendMessage("جاري التفكير والتصميم بسرعة فائقة عبر خوادم Groq...", 'ai');
+
+      try {
+        // ⚠️ ضع مفتاح Groq الخاص بك هنا
+        const apiKey = "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"; 
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              { role: "system", content: "أنت مساعد ذكي متخصص في تصميم الأزياء ورسم الباترونات باستخدام أكواد SVG." },
+              { role: "user", content: fullPrompt }
+            ],
+            temperature: 0.7
+          })
+        });
+
+        const data = await response.json();
+
+        const chatBox = document.getElementById('chat-messages');
+        chatBox.removeChild(chatBox.lastChild);
+
+        if (!response.ok) {
+            let errorMsg = `خطأ من السيرفر: ${response.status}. `;
+            if (data.error && data.error.message) {
+                errorMsg += `<br><strong style="color:#d32f2f;">السبب:</strong> ${data.error.message}`;
+            }
+            appendMessage(errorMsg, 'ai');
+            return;
+        }
+
+        if (data.choices && data.choices.length > 0) {
+          let aiResponse = data.choices[0].message.content;
+
+          if (aiResponse.includes("<svg")) {
+            const svgStart = aiResponse.indexOf("<svg");
+            const svgEnd = aiResponse.indexOf("</svg>") + 6;
+            const svgCode = aiResponse.substring(svgStart, svgEnd);
+
+            const base64Svg = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgCode)));
+            appendMessage(base64Svg, 'ai', true);
+
+            setTimeout(() => {
+              appendMessage(`تم رسم الباترون بنجاح استناداً لقياساتك. هل أضيف لك مسافات الخياطة (Seam Allowance)؟`, 'ai');
+            }, 800);
+          } else {
+            appendMessage(aiResponse, 'ai');
+          }
+        }
+
+      } catch (error) {
+        console.error("تفاصيل الخطأ:", error);
+        const chatBox = document.getElementById('chat-messages');
+        chatBox.removeChild(chatBox.lastChild);
+        
+        appendMessage(`<strong>فشل الاتصال:</strong> ${error.message}<br><br><span style="font-size:0.9rem; color:#555;">تأكد من وضع المفتاح الصحيح وتأكد أنك تفتح المشروع باستخدام Live Server.</span>`, 'ai');
+      }
+    }
+  </script>
+</body>
+
+</html>
