@@ -247,22 +247,7 @@
     .export-bar { display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
     .hidden { display: none !important; }
 
-    /* واجهة الشات */
-    .chat-container {
-      background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color); border-radius: 16px; display: flex; flex-direction: column;
-      height: 500px; margin-top: 40px; margin-bottom: 20px; box-shadow: var(--glass-shadow); overflow: hidden;
-    }
-    .chat-header {
-      background: rgba(26, 26, 26, 0.9); color: var(--gold); padding: 18px 20px; font-weight: 800; font-size: 1.1rem;
-      display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: rgba(255, 255, 255, 0.3); }
-    .message { padding: 14px 18px; border-radius: 12px; max-width: 85%; font-size: 1rem; line-height: 1.6; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
-    .message.user { background: #ffffff; color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid rgba(0, 0, 0, 0.05); }
-    .message.ai { background: linear-gradient(135deg, rgba(197, 160, 89, 0.15) 0%, rgba(197, 160, 89, 0.05) 100%); color: var(--text-main); border: 1px solid rgba(197, 160, 89, 0.3); align-self: flex-end; text-align: right; border-bottom-right-radius: 0; }
-    .chat-input-area { display: flex; padding: 15px; border-top: 1px solid rgba(0, 0, 0, 0.05); background: rgba(255, 255, 255, 0.8); gap: 12px; }
-    .chat-input-area input { flex: 1; margin-bottom: 0; border-radius: 10px; background: #fff; border: 1px solid #ddd; }
+    
   </style>
 </head>
 
@@ -320,34 +305,36 @@
     <div id="pattern-view" class="card hidden">
       <h2 style="text-align: center; color: var(--gold); font-weight: 800; margin-bottom: 25px;">تطبيق القياسات على الباترون</h2>
 
-      <h4 style="margin-bottom: 15px; font-weight: 700;">اختر القالب الهندسي:</h4>
+      <h4 style="margin-bottom: 8px; font-weight: 700;">اختر تصميم الباترون:</h4>
+      <p style="margin-bottom: 18px; color: var(--text-muted);">اختر التصميم المطلوب، ثم تُعرض القياسات المستخرجة مباشرة فوق أماكنها على الباترون.</p>
       <div class="pattern-selection-grid">
-        <div class="pattern-card selected" onclick="selectPatternTemplate(1, 'blueprint-shirt.jpg', this)">
-          <img src="blueprint-shirt.jpg" alt="Shirt Blueprint" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PC9zdmc+'">
-          <p>باترون قميص أساسي</p>
+        <div class="pattern-card selected" onclick="selectPatternTemplate(1, this)">
+          <img src="assets/1.1.jpeg" alt="بلوزة بأكمام واسعة">
+          <p>بلوزة بأكمام واسعة</p>
         </div>
-        <div class="pattern-card" onclick="selectPatternTemplate(2, 'blueprint-pants.jpg', this)">
-          <img src="blueprint-pants.jpg" alt="Pants Blueprint" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PC9zdmc+'">
-          <p>باترون بنطلون</p>
+        <div class="pattern-card" onclick="selectPatternTemplate(2, this)">
+          <img src="assets/2.1.jpeg" alt="بلوزة بياقة">
+          <p>بلوزة بياقة</p>
+        </div>
+        <div class="pattern-card" onclick="selectPatternTemplate(3, this)">
+          <img src="assets/3.1.jpeg" alt="بلوزة بكم قصير">
+          <p>بلوزة بكم قصير</p>
+        </div>
+        <div class="pattern-card" onclick="selectPatternTemplate(4, this)">
+          <img src="assets/4.1.jpeg" alt="قميص بأكمام طويلة">
+          <p>قميص بأكمام طويلة</p>
+        </div>
+        <div class="pattern-card" onclick="selectPatternTemplate(5, this)">
+          <img src="assets/5.1.jpeg" alt="قميص رجالي كلاسيكي">
+          <p>قميص رجالي كلاسيكي</p>
         </div>
       </div>
 
       <div style="text-align: center;">
         <canvas id="final-pattern-canvas" width="800" height="600"></canvas>
       </div>
-
-      <div class="chat-container">
-        <div class="chat-header">
-          <span>✨ مساعد المبيعات وتصميم الباترون</span>
-          <span style="font-size: 0.85rem; color: #a8e6cf; font-weight: normal;">متصل الآن 🟢</span>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-          <div class="message ai">مرحباً! أنا خياطك الرقمي الذكي. لقد استلمت مقاساتك بنجاح. اطلب مني تصميم باترون (مثل: صمم لي قميص) وسأقوم برسمه لك فوراً.</div>
-        </div>
-        <div class="chat-input-area">
-          <input type="text" id="chat-input" placeholder="اكتب طلبك هنا (مثال: ارسم لي باترون القميص الأساسي)..." onkeypress="if(event.key === 'Enter') sendMessageToChatGPT()">
-          <button class="btn" onclick="sendMessageToChatGPT()">إرسال</button>
-        </div>
+      <div style="text-align:center;margin:30px 0;">
+        <button class="btn" onclick="draw2DPatternCanvas()">🧵 تحديث القياسات على الباترون</button>
       </div>
 
       <div class="export-bar">
@@ -403,7 +390,7 @@
     let cameraStarted = false;
 
     let activePatternId = 1;
-    let selectedPatternImgName = "blueprint-shirt.jpg";
+    let selectedPatternImgName = "بلوزة بأكمام واسعة";
     let patternImageElement = new Image();
 
     const metricsLabels = [
@@ -625,12 +612,35 @@
 
       if (cameraStarted) { camera.stop(); cameraStarted = false; }
 
-      selectPatternTemplate(1, 'blueprint-shirt.jpg', document.querySelector('.pattern-card'));
+      selectPatternTemplate(1, document.querySelector('.pattern-card'));
     }
 
-    function selectPatternTemplate(id, fileName, element) {
+    const patternTemplates = {
+      1: { file: 'assets/1.0.jpeg', name: 'بلوزة بأكمام واسعة', metrics: [
+        [0.18, 0.13, 0.42, 0.13, 10, 'Shoulder'], [0.12, 0.19, 0.12, 0.58, 1, 'Garment length'],
+        [0.52, 0.48, 0.52, 0.78, 12, 'Sleeve length'], [0.15, 0.43, 0.39, 0.43, 3, 'Chest']
+      ]},
+      2: { file: 'assets/2.0.jpeg', name: 'بلوزة بياقة', metrics: [
+        [0.63, 0.17, 0.86, 0.17, 10, 'Shoulder'], [0.79, 0.20, 0.79, 0.62, 1, 'Garment length'],
+        [0.14, 0.58, 0.39, 0.58, 3, 'Chest'], [0.58, 0.78, 0.85, 0.78, 12, 'Sleeve length']
+      ]},
+      3: { file: 'assets/3.0.jpeg', name: 'بلوزة بكم قصير', metrics: [
+        [0.07, 0.07, 0.43, 0.07, 10, 'Shoulder'], [0.10, 0.16, 0.10, 0.75, 1, 'Garment length'],
+        [0.14, 0.35, 0.47, 0.35, 3, 'Chest'], [0.50, 0.18, 0.50, 0.31, 12, 'Sleeve length']
+      ]},
+      4: { file: 'assets/4.0.jpeg', name: 'قميص بأكمام طويلة', metrics: [
+        [0.47, 0.17, 0.67, 0.17, 10, 'Shoulder'], [0.46, 0.23, 0.46, 0.61, 1, 'Shirt length'],
+        [0.67, 0.61, 0.82, 0.61, 3, 'Chest'], [0.66, 0.67, 0.66, 0.88, 12, 'Sleeve length']
+      ]},
+      5: { file: 'assets/5.0.jpeg', name: 'قميص رجالي كلاسيكي', metrics: [
+        [0.05, 0.10, 0.28, 0.10, 10, 'Shoulder'], [0.06, 0.14, 0.06, 0.52, 1, 'Shirt length'],
+        [0.06, 0.30, 0.28, 0.30, 3, 'Chest'], [0.52, 0.70, 0.92, 0.70, 12, 'Sleeve length']
+      ]}
+    };
+
+    function selectPatternTemplate(id, element) {
       activePatternId = id;
-      selectedPatternImgName = fileName;
+      selectedPatternImgName = patternTemplates[id].name;
 
       document.querySelectorAll('.pattern-card').forEach(el => el.classList.remove('selected'));
       element.classList.add('selected');
@@ -638,7 +648,7 @@
       patternImageElement.onload = function () {
         draw2DPatternCanvas();
       };
-      patternImageElement.src = fileName;
+      patternImageElement.src = patternTemplates[id].file;
     }
 
     function draw2DPatternCanvas() {
@@ -656,39 +666,39 @@
         canvas.height = 600; 
       }
 
-      const scaleX = canvas.width / 1000; 
-      const scaleY = canvas.height / 600;
-
-      ctx.strokeStyle = "rgba(197, 160, 89, 0.9)";
-      ctx.lineWidth = 3;
-
-      if (activePatternId === 1) {
-        drawMetricArrow(ctx, 150 * scaleX, 100 * scaleY, 350 * scaleX, 100 * scaleY, finalMetrics[10], "الكتف");
-        drawMetricArrow(ctx, 120 * scaleX, 300 * scaleY, 380 * scaleX, 300 * scaleY, (finalMetrics[3] / 2).toFixed(1), "الصدر");
-        drawMetricArrow(ctx, 600 * scaleX, 150 * scaleY, 600 * scaleX, 450 * scaleY, finalMetrics[12], "طول الكم");
-        drawMetricArrow(ctx, 220 * scaleX, 50 * scaleY, 280 * scaleX, 50 * scaleY, (finalMetrics[2] / 2).toFixed(1), "الرقبة");
-      } else {
-        drawMetricArrow(ctx, canvas.width * 0.2, canvas.height * 0.2, canvas.width * 0.8, canvas.height * 0.2, finalMetrics[10], "الكتف");
-      }
+      const template = patternTemplates[activePatternId];
+      template.metrics.forEach(([x1, y1, x2, y2, metricIndex, label]) => {
+        drawMetricArrow(ctx, x1 * canvas.width, y1 * canvas.height, x2 * canvas.width, y2 * canvas.height, finalMetrics[metricIndex], label);
+      });
     }
 
     function drawMetricArrow(ctx, x1, y1, x2, y2, value, label = "") {
-      const headlen = 8; const angle = Math.atan2(y2 - y1, x2 - x1);
+      const headlen = 10; const angle = Math.atan2(y2 - y1, x2 - x1);
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.restore();
 
       ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
       ctx.moveTo(x1, y1); ctx.lineTo(x1 + headlen * Math.cos(angle + Math.PI / 6), y1 + headlen * Math.sin(angle + Math.PI / 6));
       ctx.moveTo(x1, y1); ctx.lineTo(x1 + headlen * Math.cos(angle - Math.PI / 6), y1 + headlen * Math.sin(angle - Math.PI / 6));
       ctx.moveTo(x2, y2); ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
       ctx.moveTo(x2, y2); ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.strokeStyle = '#9B762F';
+      ctx.lineWidth = 3;
       ctx.stroke();
 
       const mx = (x1 + x2) / 2; const my = (y1 + y2) / 2;
       ctx.save(); ctx.translate(mx, my);
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(-45, -14, 90, 28);
-      ctx.strokeStyle = "#C5A059"; ctx.strokeRect(-45, -14, 90, 28);
-      ctx.fillStyle = "#1A1A1A"; ctx.font = "bold 13px 'Tajawal', sans-serif";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.22)'; ctx.shadowBlur = 7;
+      ctx.fillRect(-66, -16, 132, 32);
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = "#9B762F"; ctx.lineWidth = 1.5; ctx.strokeRect(-66, -16, 132, 32);
+      ctx.fillStyle = "#1A1A1A"; ctx.font = "bold 12px Arial, sans-serif";
       ctx.fillText(`${label}: ${value}cm`, 0, 0);
       ctx.restore();
     }
@@ -742,174 +752,6 @@
       link.download = `Pattern_${finalUserName}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-    }
-
-    // ----------------------------------------------------
-    // قالب الباترون الهندسي الاحترافي (Parametric SVG)
-    // ----------------------------------------------------
-    function getProfessionalShirtSVG() {
-      const neck = (finalMetrics[2] / 2).toFixed(1) || "--";
-      const chest = (finalMetrics[3] / 2).toFixed(1) || "--";
-      const shoulder = finalMetrics[10] || "--";
-      const sleeve = finalMetrics[12] || "--";
-      const totalLength = finalMetrics[1] > 0 ? (finalMetrics[1] * 0.42).toFixed(1) : "75";
-
-      return `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" style="background:#f9f9f9; width:100%; font-family:'Tajawal', sans-serif; border-radius: 8px;">
-          <!-- شبكة الخلفية الهندسية -->
-          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-
-          <!-- العنوان العلوي -->
-          <rect x="0" y="0" width="800" height="50" fill="#0A192F" />
-          <text x="400" y="32" fill="#C5A059" font-size="20" font-weight="bold" text-anchor="middle">باترون قميص رجالي احترافي - أبعاد مستخرجة بالكاميرا</text>
-
-          <!-- قسم الأمام (Front) -->
-          <g transform="translate(60, 100)">
-              <text x="75" y="-15" fill="#1A1A1A" font-weight="bold" text-anchor="middle" font-size="16">الأمام (قطعة واحدة)</text>
-              <path d="M 40 0 Q 65 25 90 0 L 150 25 L 125 140 Q 120 200 135 350 L 15 350 Q 30 200 25 140 Z" fill="rgba(197, 160, 89, 0.05)" stroke="#0A192F" stroke-width="2.5"/>
-              <line x1="40" y1="0" x2="90" y2="0" stroke="#d32f2f" stroke-width="2"/>
-              <text x="65" y="-5" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle">${neck} سم</text>
-              <line x1="25" y1="140" x2="125" y2="140" stroke="#d32f2f" stroke-width="2" stroke-dasharray="5"/>
-              <text x="75" y="135" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle">${chest} سم</text>
-              <line x1="-5" y1="25" x2="-5" y2="350" stroke="#d32f2f" stroke-width="2"/>
-              <text x="-15" y="180" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle" transform="rotate(-90, -15, 180)">${totalLength} سم</text>
-          </g>
-
-          <!-- قسم الظهر (Back) -->
-          <g transform="translate(320, 100)">
-              <text x="75" y="-15" fill="#1A1A1A" font-weight="bold" text-anchor="middle" font-size="16">الظهر (قطعة واحدة)</text>
-              <path d="M 30 15 Q 75 5 120 15 L 165 35 L 140 140 Q 135 200 150 350 L 0 350 Q 15 200 10 140 Z" fill="rgba(197, 160, 89, 0.05)" stroke="#0A192F" stroke-width="2.5"/>
-              <line x1="30" y1="15" x2="120" y2="15" stroke="#d32f2f" stroke-width="2"/>
-              <text x="75" y="10" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle">${shoulder} سم</text>
-          </g>
-
-          <!-- قسم الكم (Sleeve) -->
-          <g transform="translate(580, 100)">
-              <text x="75" y="-15" fill="#1A1A1A" font-weight="bold" text-anchor="middle" font-size="16">الكم (قطعتان)</text>
-              <path d="M 75 0 Q 135 15 150 75 L 115 320 L 35 320 L 0 75 Q 15 15 75 0 Z" fill="rgba(197, 160, 89, 0.05)" stroke="#0A192F" stroke-width="2.5"/>
-              <line x1="75" y1="0" x2="75" y2="320" stroke="#d32f2f" stroke-width="2" stroke-dasharray="5"/>
-              <text x="95" y="160" fill="#d32f2f" font-size="14" font-weight="bold">${sleeve} سم</text>
-          </g>
-      </svg>
-      `;
-    }
-
-    // ----------------------------------------------------
-    // دوال المساعد الذكي Groq Cloud لإدارة المحادثة والحقن
-    // ----------------------------------------------------
-    function appendMessage(content, sender, isSvg = false) {
-      const chatBox = document.getElementById('chat-messages');
-      const msgDiv = document.createElement('div');
-      msgDiv.className = `message ${sender}`;
-
-      if (isSvg) {
-        const textElement = document.createElement('div');
-        textElement.innerText = "تفضل، هذا هو الباترون مسقط عليه مقاساتك:";
-        textElement.style.marginBottom = '10px';
-        textElement.style.fontWeight = '700';
-
-        const svgContainer = document.createElement('div');
-        svgContainer.innerHTML = content;
-        svgContainer.style.width = '100%';
-        svgContainer.style.background = '#fdfbfb';
-        svgContainer.style.borderRadius = '10px';
-        svgContainer.style.marginTop = '10px';
-        svgContainer.style.border = '1px solid rgba(197, 160, 89, 0.3)';
-        svgContainer.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
-        svgContainer.style.overflow = 'hidden';
-        svgContainer.style.textAlign = 'center';
-        svgContainer.style.padding = '10px';
-
-        const svgEl = svgContainer.querySelector('svg');
-        if(svgEl) {
-          svgEl.style.maxWidth = '100%';
-          svgEl.style.height = 'auto';
-        }
-
-        msgDiv.appendChild(textElement);
-        msgDiv.appendChild(svgContainer);
-      } else {
-        msgDiv.innerHTML = content;
-      }
-
-      chatBox.appendChild(msgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async function sendMessageToChatGPT() {
-      const input = document.getElementById('chat-input');
-      const text = input.value.trim();
-
-      if (!text) return;
-
-      appendMessage(text, 'user');
-      input.value = '';
-
-      appendMessage("جاري إعداد الباترون الاحترافي...", 'ai');
-
-      try {
-        const apiKey = "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"; // ضع المفتاح الخاص بك هنا
-
-        const systemPrompt = `أنت مساعد ذكي في مشغل خياطة. 
-        مهمتك فقط تصنيف طلب العميل. 
-        إذا كان العميل يريد تفصيل "قميص" أو "تيشيرت" أو "باترون"، رد بكلمة [SHIRT] فقط.
-        إذا كان يطلب شيئاً آخر، رد عليه بشكل طبيعي وودي. لا تكتب أي أكواد برمجية أبداً.`;
-
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: text }
-            ],
-            temperature: 0.3
-          })
-        });
-
-        const data = await response.json();
-
-        const chatBox = document.getElementById('chat-messages');
-        chatBox.removeChild(chatBox.lastChild);
-
-        if (!response.ok) {
-            let errorMsg = `خطأ من السيرفر: ${response.status}. `;
-            if (data.error && data.error.message) {
-                errorMsg += `<br><strong style="color:#d32f2f;">السبب:</strong> ${data.error.message}`;
-            }
-            appendMessage(errorMsg, 'ai');
-            return;
-        }
-
-        if (data.choices && data.choices.length > 0) {
-          let aiResponse = data.choices[0].message.content.trim();
-
-          // إذا صنف الطلب كقميص نقوم بإظهار القالب الاحترافي
-          if (aiResponse.includes("[SHIRT]")) {
-            const svgCode = getProfessionalShirtSVG();
-            appendMessage(svgCode, 'ai', true);
-            
-            setTimeout(() => {
-              appendMessage("تم استخراج الباترون الهندسي بدقة بناءً على مقاساتك المأخوذة بالكاميرا. هل تود تعديل مسافات الخياطة الأساسية (Seam Allowance)؟", 'ai');
-            }, 1000);
-          } else {
-            appendMessage(aiResponse, 'ai');
-          }
-        }
-
-      } catch (error) {
-        console.error("Error:", error);
-        const chatBox = document.getElementById('chat-messages');
-        chatBox.removeChild(chatBox.lastChild);
-        appendMessage(`فشل الاتصال: تأكد من مفتاح الـ API وتأكد أنك تستخدم Live Server.`, 'ai');
-      }
     }
 
     const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
