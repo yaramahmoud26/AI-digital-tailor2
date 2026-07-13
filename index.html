@@ -79,7 +79,7 @@
       padding: 0 20px;
     }
 
-    /* الكروت والألواح (تأثير الزجاج) */
+    /* الكروت والألواح */
     .card {
       background: var(--card-bg);
       backdrop-filter: blur(12px);
@@ -342,7 +342,7 @@
           <span style="font-size: 0.85rem; color: #a8e6cf; font-weight: normal;">متصل الآن 🟢</span>
         </div>
         <div class="chat-messages" id="chat-messages">
-          <div class="message ai">مرحباً! أنا خياطك الرقمي الذكي. لقد استلمت مقاساتك بنجاح. اطلب مني تصميم باترون بناءً على المقاسات وسأقوم برسمه لك فوراً.</div>
+          <div class="message ai">مرحباً! أنا خياطك الرقمي الذكي. لقد استلمت مقاساتك بنجاح. اطلب مني تصميم باترون (مثل: صمم لي قميص) وسأقوم برسمه لك فوراً.</div>
         </div>
         <div class="chat-input-area">
           <input type="text" id="chat-input" placeholder="اكتب طلبك هنا (مثال: ارسم لي باترون القميص الأساسي)..." onkeypress="if(event.key === 'Enter') sendMessageToChatGPT()">
@@ -625,7 +625,6 @@
 
       if (cameraStarted) { camera.stop(); cameraStarted = false; }
 
-      // تأكد أن الصورة blueprint-shirt.jpg موجودة لتجنب رسائل الخطأ
       selectPatternTemplate(1, 'blueprint-shirt.jpg', document.querySelector('.pattern-card'));
     }
 
@@ -649,16 +648,14 @@
       const targetWidth = canvas.parentElement.clientWidth;
       canvas.width = targetWidth;
       
-      // إذا لم يتم تحميل الصورة بشكل صحيح يتم تجنب القسمة على صفر
       if(patternImageElement.width > 0) {
         canvas.height = (patternImageElement.height / patternImageElement.width) * targetWidth;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(patternImageElement, 0, 0, canvas.width, canvas.height);
       } else {
-        canvas.height = 600; // قيمة افتراضية في حالة عدم وجود صورة
+        canvas.height = 600; 
       }
 
-      // مقاييس خاصة بالباترون الهندسي العريض
       const scaleX = canvas.width / 1000; 
       const scaleY = canvas.height / 600;
 
@@ -666,7 +663,6 @@
       ctx.lineWidth = 3;
 
       if (activePatternId === 1) {
-        // إحداثيات مبدئية لباترون القميص الهندسي - قم بتعديلها لتطابق صورتك تماماً
         drawMetricArrow(ctx, 150 * scaleX, 100 * scaleY, 350 * scaleX, 100 * scaleY, finalMetrics[10], "الكتف");
         drawMetricArrow(ctx, 120 * scaleX, 300 * scaleY, 380 * scaleX, 300 * scaleY, (finalMetrics[3] / 2).toFixed(1), "الصدر");
         drawMetricArrow(ctx, 600 * scaleX, 150 * scaleY, 600 * scaleX, 450 * scaleY, finalMetrics[12], "طول الكم");
@@ -748,73 +744,100 @@
       link.click();
     }
 
-    const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
-    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.55, minTrackingConfidence: 0.55 });
-    pose.onResults(onResults);
-
-    const camera = new Camera(videoElement, {
-      onFrame: async () => { await pose.send({ image: videoElement }); },
-      width: 640, height: 480
-    });
-
     // ----------------------------------------------------
-    // دوال المساعد الذكي Groq Cloud
+    // قالب الباترون الهندسي الاحترافي (Parametric SVG)
     // ----------------------------------------------------
+    function getProfessionalShirtSVG() {
+      const neck = (finalMetrics[2] / 2).toFixed(1) || "--";
+      const chest = (finalMetrics[3] / 2).toFixed(1) || "--";
+      const shoulder = finalMetrics[10] || "--";
+      const sleeve = finalMetrics[12] || "--";
+      const totalLength = finalMetrics[1] > 0 ? (finalMetrics[1] * 0.42).toFixed(1) : "75";
 
-    function getMeasurementsContext() {
-      let context = "معلومات العميل الحالية:\n";
-      context += `- الاسم: ${finalUserName}\n`;
-      context += `- الباترون المختار: ${selectedPatternImgName}\n\nالمقاسات المستخرجة (بالسنتيمتر):\n`;
+      return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" style="background:#f9f9f9; width:100%; font-family:'Tajawal', sans-serif; border-radius: 8px;">
+          <!-- شبكة الخلفية الهندسية -->
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#grid)" />
 
-      const keyIndices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-      keyIndices.forEach(i => {
-        context += `- ${metricsLabels[i]}: ${finalMetrics[i]} سم\n`;
-      });
+          <!-- العنوان العلوي -->
+          <rect x="0" y="0" width="800" height="50" fill="#0A192F" />
+          <text x="400" y="32" fill="#C5A059" font-size="20" font-weight="bold" text-anchor="middle">باترون قميص رجالي احترافي - أبعاد مستخرجة بالكاميرا</text>
 
-      return context;
+          <!-- قسم الأمام (Front) -->
+          <g transform="translate(60, 100)">
+              <text x="75" y="-15" fill="#1A1A1A" font-weight="bold" text-anchor="middle" font-size="16">الأمام (قطعة واحدة)</text>
+              <path d="M 40 0 Q 65 25 90 0 L 150 25 L 125 140 Q 120 200 135 350 L 15 350 Q 30 200 25 140 Z" fill="rgba(197, 160, 89, 0.05)" stroke="#0A192F" stroke-width="2.5"/>
+              <line x1="40" y1="0" x2="90" y2="0" stroke="#d32f2f" stroke-width="2"/>
+              <text x="65" y="-5" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle">${neck} سم</text>
+              <line x1="25" y1="140" x2="125" y2="140" stroke="#d32f2f" stroke-width="2" stroke-dasharray="5"/>
+              <text x="75" y="135" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle">${chest} سم</text>
+              <line x1="-5" y1="25" x2="-5" y2="350" stroke="#d32f2f" stroke-width="2"/>
+              <text x="-15" y="180" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle" transform="rotate(-90, -15, 180)">${totalLength} سم</text>
+          </g>
+
+          <!-- قسم الظهر (Back) -->
+          <g transform="translate(320, 100)">
+              <text x="75" y="-15" fill="#1A1A1A" font-weight="bold" text-anchor="middle" font-size="16">الظهر (قطعة واحدة)</text>
+              <path d="M 30 15 Q 75 5 120 15 L 165 35 L 140 140 Q 135 200 150 350 L 0 350 Q 15 200 10 140 Z" fill="rgba(197, 160, 89, 0.05)" stroke="#0A192F" stroke-width="2.5"/>
+              <line x1="30" y1="15" x2="120" y2="15" stroke="#d32f2f" stroke-width="2"/>
+              <text x="75" y="10" fill="#d32f2f" font-size="14" font-weight="bold" text-anchor="middle">${shoulder} سم</text>
+          </g>
+
+          <!-- قسم الكم (Sleeve) -->
+          <g transform="translate(580, 100)">
+              <text x="75" y="-15" fill="#1A1A1A" font-weight="bold" text-anchor="middle" font-size="16">الكم (قطعتان)</text>
+              <path d="M 75 0 Q 135 15 150 75 L 115 320 L 35 320 L 0 75 Q 15 15 75 0 Z" fill="rgba(197, 160, 89, 0.05)" stroke="#0A192F" stroke-width="2.5"/>
+              <line x1="75" y1="0" x2="75" y2="320" stroke="#d32f2f" stroke-width="2" stroke-dasharray="5"/>
+              <text x="95" y="160" fill="#d32f2f" font-size="14" font-weight="bold">${sleeve} سم</text>
+          </g>
+      </svg>
+      `;
     }
 
-function appendMessage(content, sender, isSvg = false) {
-  const chatBox = document.getElementById('chat-messages');
-  const msgDiv = document.createElement('div');
-  msgDiv.className = `message ${sender}`;
+    // ----------------------------------------------------
+    // دوال المساعد الذكي Groq Cloud لإدارة المحادثة والحقن
+    // ----------------------------------------------------
+    function appendMessage(content, sender, isSvg = false) {
+      const chatBox = document.getElementById('chat-messages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
 
-  if (isSvg) {
-    // إضافة رسالة توضيحية فوق الباترون
-    const textElement = document.createElement('div');
-    textElement.innerText = "تفضل، هذا هو الباترون مسقط عليه مقاساتك:";
-    textElement.style.marginBottom = '10px';
-    textElement.style.fontWeight = '700';
+      if (isSvg) {
+        const textElement = document.createElement('div');
+        textElement.innerText = "تفضل، هذا هو الباترون مسقط عليه مقاساتك:";
+        textElement.style.marginBottom = '10px';
+        textElement.style.fontWeight = '700';
 
-    // إنشاء حاوية لعرض الباترون المباشر
-    const svgContainer = document.createElement('div');
-    svgContainer.innerHTML = content; // حقن الكود مباشرة
-    svgContainer.style.width = '100%';
-    svgContainer.style.background = '#fdfbfb';
-    svgContainer.style.borderRadius = '10px';
-    svgContainer.style.marginTop = '10px';
-    svgContainer.style.border = '1px solid rgba(197, 160, 89, 0.3)';
-    svgContainer.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
-    svgContainer.style.overflow = 'hidden';
-    svgContainer.style.textAlign = 'center';
-    svgContainer.style.padding = '10px';
+        const svgContainer = document.createElement('div');
+        svgContainer.innerHTML = content;
+        svgContainer.style.width = '100%';
+        svgContainer.style.background = '#fdfbfb';
+        svgContainer.style.borderRadius = '10px';
+        svgContainer.style.marginTop = '10px';
+        svgContainer.style.border = '1px solid rgba(197, 160, 89, 0.3)';
+        svgContainer.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
+        svgContainer.style.overflow = 'hidden';
+        svgContainer.style.textAlign = 'center';
+        svgContainer.style.padding = '10px';
 
-    // ضبط أبعاد الـ SVG ليتناسب مع الشاشة
-    const svgEl = svgContainer.querySelector('svg');
-    if(svgEl) {
-      svgEl.style.maxWidth = '100%';
-      svgEl.style.height = 'auto';
+        const svgEl = svgContainer.querySelector('svg');
+        if(svgEl) {
+          svgEl.style.maxWidth = '100%';
+          svgEl.style.height = 'auto';
+        }
+
+        msgDiv.appendChild(textElement);
+        msgDiv.appendChild(svgContainer);
+      } else {
+        msgDiv.innerHTML = content;
+      }
+
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
-
-    msgDiv.appendChild(textElement);
-    msgDiv.appendChild(svgContainer);
-  } else {
-    msgDiv.innerHTML = content;
-  }
-
-  chatBox.appendChild(msgDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
 
     async function sendMessageToChatGPT() {
       const input = document.getElementById('chat-input');
@@ -825,18 +848,15 @@ function appendMessage(content, sender, isSvg = false) {
       appendMessage(text, 'user');
       input.value = '';
 
-      const userMessageCount = document.querySelectorAll('.message.user').length;
-      let fullPrompt = text;
-
-      if (userMessageCount === 1) {
-        fullPrompt = `أنت خياط رقمي خبير. بناءً على هذه المقاسات: \n${getMeasurementsContext()}\n\nطلب العميل: ${text}\nقم بتوليد كود SVG لباترون مبسط يحتوي على أبعاد العميل على الرسمة. إذا كنت ستقوم بتوليد رسمة، أرسل كود الـ SVG فقط بدون أي نصوص إضافية حوله لكي أتمكن من عرضه مباشرة.`;
-      }
-
-      appendMessage("جاري التفكير والتصميم بسرعة فائقة عبر خوادم Groq...", 'ai');
+      appendMessage("جاري إعداد الباترون الاحترافي...", 'ai');
 
       try {
-        // ⚠️ ضع مفتاح Groq الخاص بك هنا
-        const apiKey = "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"; 
+        const apiKey = "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"; // ضع المفتاح الخاص بك هنا
+
+        const systemPrompt = `أنت مساعد ذكي في مشغل خياطة. 
+        مهمتك فقط تصنيف طلب العميل. 
+        إذا كان العميل يريد تفصيل "قميص" أو "تيشيرت" أو "باترون"، رد بكلمة [SHIRT] فقط.
+        إذا كان يطلب شيئاً آخر، رد عليه بشكل طبيعي وودي. لا تكتب أي أكواد برمجية أبداً.`;
 
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
@@ -847,10 +867,10 @@ function appendMessage(content, sender, isSvg = false) {
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
             messages: [
-              { role: "system", content: "أنت مساعد ذكي متخصص في تصميم الأزياء ورسم الباترونات باستخدام أكواد SVG." },
-              { role: "user", content: fullPrompt }
+              { role: "system", content: systemPrompt },
+              { role: "user", content: text }
             ],
-            temperature: 0.7
+            temperature: 0.3
           })
         });
 
@@ -869,32 +889,37 @@ function appendMessage(content, sender, isSvg = false) {
         }
 
         if (data.choices && data.choices.length > 0) {
-          let aiResponse = data.choices[0].message.content;
+          let aiResponse = data.choices[0].message.content.trim();
 
-          if (aiResponse.includes("<svg")) {
-            const svgStart = aiResponse.indexOf("<svg");
-            const svgEnd = aiResponse.indexOf("</svg>") + 6;
-            const svgCode = aiResponse.substring(svgStart, svgEnd);
-
-            const base64Svg = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgCode)));
-            appendMessage(base64Svg, 'ai', true);
-
+          // إذا صنف الطلب كقميص نقوم بإظهار القالب الاحترافي
+          if (aiResponse.includes("[SHIRT]")) {
+            const svgCode = getProfessionalShirtSVG();
+            appendMessage(svgCode, 'ai', true);
+            
             setTimeout(() => {
-              appendMessage(`تم رسم الباترون بنجاح استناداً لقياساتك. هل أضيف لك مسافات الخياطة (Seam Allowance)؟`, 'ai');
-            }, 800);
+              appendMessage("تم استخراج الباترون الهندسي بدقة بناءً على مقاساتك المأخوذة بالكاميرا. هل تود تعديل مسافات الخياطة الأساسية (Seam Allowance)؟", 'ai');
+            }, 1000);
           } else {
             appendMessage(aiResponse, 'ai');
           }
         }
 
       } catch (error) {
-        console.error("تفاصيل الخطأ:", error);
+        console.error("Error:", error);
         const chatBox = document.getElementById('chat-messages');
         chatBox.removeChild(chatBox.lastChild);
-        
-        appendMessage(`<strong>فشل الاتصال:</strong> ${error.message}<br><br><span style="font-size:0.9rem; color:#555;">تأكد من وضع المفتاح الصحيح وتأكد أنك تفتح المشروع باستخدام Live Server.</span>`, 'ai');
+        appendMessage(`فشل الاتصال: تأكد من مفتاح الـ API وتأكد أنك تستخدم Live Server.`, 'ai');
       }
     }
+
+    const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.55, minTrackingConfidence: 0.55 });
+    pose.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => { await pose.send({ image: videoElement }); },
+      width: 640, height: 480
+    });
   </script>
 </body>
 
